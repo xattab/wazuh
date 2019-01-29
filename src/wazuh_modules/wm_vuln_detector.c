@@ -909,7 +909,7 @@ int wm_vuldet_insert(wm_vuldet_db *parsed_oval) {
         sqlite3_bind_text(stmt, 7, NULL, -1, NULL);
         sqlite3_bind_text(stmt, 8, NULL, -1, NULL);
 
-        if (result = wm_vuldet_step(stmt), result != SQLITE_DONE) {
+        if (result = wm_vuldet_step(stmt), result != SQLITE_DONE && result != SQLITE_CONSTRAINT) {
             return wm_vuldet_sql_error(db, stmt);
         }
         sqlite3_finalize(stmt);
@@ -1755,6 +1755,9 @@ const char *wm_vuldet_decode_package_version(char *raw, const char **OS, char **
     static char *package_regex = "(-\\d+:)|(-\\d+.)|(-\\d+\\w+)";
     const char *retv = NULL;
     char *found;
+    const char *RHEL_7 = ".el7";
+    const char *RHEL_6 = ".el6";
+    const char *RHEL_5 = ".el5";
 
     if (!reg) {
         os_calloc(1, sizeof(OSRegex), reg);
@@ -1771,12 +1774,15 @@ const char *wm_vuldet_decode_package_version(char *raw, const char **OS, char **
         w_strdup(found + 1, *package_version);
         w_strdup(raw, *package_name);
 
-        if (strstr(*package_version, ".el7")) {
+        if (found = strstr(*package_version, RHEL_7), found) {
             *OS = vu_dist_tag[DIS_RHEL7];
-        } else if (strstr(*package_version, ".el6")) {
+            *(found + strlen(RHEL_7)) = '\0';
+        } else if (found = strstr(*package_version, RHEL_6), found) {
             *OS = vu_dist_tag[DIS_RHEL6];
-        } else if (strstr(*package_version, ".el5")) {
+            *(found + strlen(RHEL_6)) = '\0';
+        } else if (found = strstr(*package_version, RHEL_5), found) {
             *OS = vu_dist_tag[DIS_RHEL5];
+            *(found + strlen(RHEL_5)) = '\0';
         }
 
         return retv;
@@ -1896,12 +1902,12 @@ int wm_vuldet_fetch_feed(update_node *update, const char *OS, int *need_update) 
                 if (!attempt) {
                     snprintf(repo, OS_SIZE_2048, RED_HAT_REPO, update->update_from_year, RED_HAT_REPO_REQ_SIZE, page);
                 } else if (attempt == RED_HAT_REPO_MAX_ATTEMPTS) {
-                    mterror(WM_VULNDETECTOR_LOGTAG, VU_API_REQ_INV, repo, RED_HAT_REPO_MAX_ATTEMPTS);
+                    mterror(WM_VULNDETECTOR_LOGTAG, VU_API_REQ_INV, repo, attempt);
                     goto end;
                 }
                 if (wurl_request(repo, CVE_TEMP_FILE)) {
                     attempt++;
-                    mtdebug1(WM_VULNDETECTOR_LOGTAG, VU_API_REQ_INV, repo, attempt * 5);
+                    mtdebug1(WM_VULNDETECTOR_LOGTAG, VU_API_REQ_INV, repo, attempt);
                     sleep(attempt * 5);
                     continue;
                 }

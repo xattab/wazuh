@@ -31,6 +31,9 @@ char *convert_windows_string(LPCWSTR string);
 // Convert double to string
 #define w_double_str(x) ({char *do_str; os_calloc(20, sizeof(char),do_str); snprintf(do_str, 19, "%f", x); do_str;})
 
+// Extract the number of equivalent characters from the beginning
+#define w_strcmp_count(x, y) ({unsigned int str_cnt = 0; for(; x[str_cnt] == y[str_cnt]; str_cnt++); str_cnt;})
+
 /* Trim the CR and/or LF from the last positions of a string */
 void os_trimcrlf(char *str) __attribute__((nonnull));
 

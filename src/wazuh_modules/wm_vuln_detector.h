@@ -136,7 +136,8 @@ typedef struct agent_software {
     char *agent_id;
     char *agent_name;
     char *agent_ip;
-    char *agent_OS;
+    char *agent_os_major;
+    char *agent_os_minor;
     char *arch;
     distribution dist;
     char info;
@@ -267,7 +268,8 @@ typedef struct vulnerability {
 
 typedef struct rh_vulnerability {
     char *cve_id;
-    const char *OS;
+    const char *os_major;
+    int os_minor;
     char *package_name;
     char *package_version;
     struct rh_vulnerability *prev;
